@@ -4,6 +4,7 @@ import os
 from twitchio.ext import commands
 from twitchio.client import Channel
 from twitchio.client import User
+import main
 
 def time_passed(oldtime, interval):
     """Takes the time of the previous command and the streamer interval and looks for seconds passed"""
@@ -41,6 +42,12 @@ class Bot(commands.Bot):
     async def event_message(self, message):
         """This function handles all message parsing and responses"""
 
+        # Check if we need to handle the message first
+        # only handle commands if the message is from me or a mod
+        if (message.content[0] == '$') and ((message.author.is_mod) or (message.author.name == 'unknowablehobo')):
+            await self.handle_commands(message)
+            return
+
         # Regex to find hardly know her jokes
         regex = r"[A-z]{3,}(er)\b"
 
@@ -62,8 +69,8 @@ class Bot(commands.Bot):
             return
 
         #check for friends, insult them on the interval
-        if message.author.name in friends and time_passed(streamer.insult_friends_timer, streamer.interval):
-            streamer.insult_friends_timer = time.time()
+        if message.author.name in friends and time_passed(streamer.insult_timer, streamer.insult_interval):
+            streamer.insult_timer = time.time()
             await Channel.send(message.channel, get_insult(message.author.name))
         
         # Look for a match after casting the message to lower case
@@ -73,7 +80,7 @@ class Bot(commands.Bot):
         if (find):
             # Check if its been a minute since the last joke, only proceed if true
             # Check for banned words
-            if time_passed(streamer.er_timer, streamer.interval) and (find[0] not in banned_words):
+            if time_passed(streamer.er_timer, streamer.er_interval) and (find[0] not in banned_words):
                 # set new timer
                 streamer.er_timer = time.time()
                 await Channel.send(message.channel, f'{find[0].capitalize()}? I hardly know her!')
@@ -82,15 +89,10 @@ class Bot(commands.Bot):
         # if the message has stinky in it
         elif (message.content.lower().__contains__('stinky')):
             # check if its been a minute since the last stinky
-            if time_passed(streamer.stinky_timer, streamer.interval):
+            if time_passed(streamer.stinky_timer, streamer.stinky_interval):
                 # reset stinky timer
                 streamer.stinky_timer = time.time()
                 await commands.Context.send(message.channel, f'Uh Oh! STINKY!')
-
-
-        # handle for commands
-        else:
-            await self.handle_commands(message)
 
 
     async def event_ready(self):
@@ -106,17 +108,12 @@ class Bot(commands.Bot):
         sender = ctx.author.name
         streamer = self.channel_list[ctx.channel.name]
 
-        # Ignore Icarus
-        if sender == 'theicarus101':
-            ctx.reply('Oi frick off you jerk! Dont tell me what to do!')
+        # Check for mod status of the sender 
+        streamer.shut_up = True
+        await ctx.send(f'Ouch, {sender}! I\'ll shut up now :( You\'ll have to say $imsorry if you want me back </3')
 
-        # Check for mod status of the sender
-        elif (ctx.author.is_mod):
-            streamer.shut_up = True
-            await ctx.send(f'Ouch, {sender}! I\'ll shut up now :( You\'ll have to say $imsorry if you want me back </3')
-
-        else:
-            await ctx.send('You cant tell me what to do, smelly!')
+        # update the data file
+        main.save_to_file(streamer)
 
 
     # handles turning the bot responses back on
@@ -127,36 +124,124 @@ class Bot(commands.Bot):
         streamer = self.channel_list[ctx.channel.name]
         
         # Check for mod status of the sender
-        if (ctx.author.is_mod):
+        if (ctx.author.is_mod) or (ctx.author.name == 'unknowablehobo'):
             streamer.shut_up = False
             await ctx.send(f'Do you love me again {sender}?!')
     
 
-    # handles turning the bot responses back on
+    # Changes the intervals at which features will trigger
     @commands.command()
     async def interval(self, ctx: commands.Context):
 
         streamer = self.channel_list[ctx.channel.name]
         interval = ctx.message.content.split(' ')
 
-        # Make sure the interval sent is a number
-        if not interval[1].isdigit():
-            await ctx.send(f'Please format the command as $interval <# of seconds>')
-            return
-        
-        # Update streamer interval
-        if (ctx.author.is_mod) or ctx.author.name == 'unknowablehobo':
-            streamer.interval = interval[1]
-            await ctx.send(f'I will now make dumb jokes every {interval[1]} seconds!')
+        # Validate input for 3 total items, with the last one being a number
+        if len(interval) < 3 or not interval[2].isdigit():
+            await ctx.send(f'Please format the command as $interval <er|stinky|insult> <# of minutes>')
 
+        feature = interval[1]
+        minutes = interval[2]       # Using minutes is easer to read
+        seconds = int(interval[2])*60    # Storing seconds is easier for later calculations
+        changed = False             # Tracks if the input was valid and something changed
+        
+        # Check for valid input features to change
+        match feature:
+            case 'er':
+                streamer.er_interval = seconds
+                changed = True
+            case 'stinky':
+                streamer.stinky_interval = seconds
+                changed = True
+            case 'insult':
+                streamer.insult_timer = seconds
+                changed = True
 
-    # Handles the help command
-    @commands.command()
-    async def help(self, ctx: commands.Context):
-        
-        # Check for mod status of the sender
-        if (ctx.author.is_mod):
-            await ctx.reply(f'$shutup - Disable bot, $interval <number> - Change reply interval seconds')
-        
+        # If change was detected, update the channel and save to file
+        if changed:
+            await ctx.send(f'I will now make {feature} jokes every {minutes} minute(s)!')
+            main.save_to_file(streamer)
+
         else:
-            await ctx.reply('I dont have to tell you anything!')
+            await ctx.send(f'Invalid input!')
+
+
+    # Enables features
+    @commands.command()
+    async def enable(self, ctx: commands.Context):
+
+        streamer = self.channel_list[ctx.channel.name]
+        interval = ctx.message.content.split(' ')
+
+        # Validate input for 3 total items, with the last one being a number
+        if len(interval) < 2:
+            await ctx.send(f'Please format the command as $enable <er|stinky|insult>')
+
+        feature = interval[1]
+        changed = False             # Tracks if the input was valid and something changed
+        
+        # Check for valid input features to change
+        match feature:
+            case 'er':
+                streamer.er_toggle = True
+                changed = True
+            case 'stinky':
+                streamer.stinky_toggle = True
+                changed = True
+            case 'insult':
+                streamer.insult_toggle = True
+                changed = True
+
+        # If change was detected, update the channel and save to file
+        if changed:
+            await ctx.send(f'I will now make {feature} jokes!')
+            main.save_to_file(streamer)
+
+        else:
+            await ctx.send(f'Invalid input!')
+
+
+    # Disables features
+    @commands.command()
+    async def disable(self, ctx: commands.Context):
+
+        streamer = self.channel_list[ctx.channel.name]
+        interval = ctx.message.content.split(' ')
+
+        # Validate input for 3 total items, with the last one being a number
+        if len(interval) < 2:
+            await ctx.send(f'Please format the command as $enable <er|stinky|insult>')
+
+        feature = interval[1]
+        changed = False             # Tracks if the input was valid and something changed
+        
+        # Check for valid input features to change
+        match feature:
+            case 'er':
+                streamer.er_toggle = False
+                changed = True
+            case 'stinky':
+                streamer.stinky_toggle = False
+                changed = True
+            case 'insult':
+                streamer.insult_toggle = False
+                changed = True
+
+        # If change was detected, update the channel and save to file
+        if changed:
+            await ctx.send(f'I will stop making {feature} jokes...')
+            main.save_to_file(streamer)
+
+        else:
+            await ctx.send(f'Invalid input!')
+
+    # # Handles the help command
+    # @commands.command()
+    # async def help(self, ctx: commands.Context):
+        
+    #     # Check for mod status of the sender
+    #     if (ctx.author.is_mod):
+    #         await ctx.reply(f'$shutup - Disable bot, $interval <number> - Change reply interval seconds')
+        
+    #     else:
+    #         await ctx.reply('I dont have to tell you anything!')

@@ -58,7 +58,7 @@ class Channel:
             "er_interval": self.er_interval,
             "er_toggle": self.er_toggle,
             "stinky_interval": self.stinky_interval,
-            "stinky_toggle": self.stinky_timer,
+            "stinky_toggle": self.stinky_toggle,
             "insult_interval": self.insult_interval,
             "insult_toggle": self.insult_toggle,
             "shut_up": self.shut_up,
@@ -66,37 +66,3 @@ class Channel:
 
         return output
 
-
-def create_from_dict(dict):
-    """Take the variables from the dictionary and turn it into a channel object"""
-
-    # Try except to handle for incomplete dictonaries
-    try:
-        
-        # Extract variables from the dictionary
-        streamer = dict["streamer"]
-        er_interval = dict["er_interval"]
-        er_toggle = dict["er_toggle"]
-        stinky_interval = dict["stinky_interval"]
-        stinky_toggle = dict["stinky_toggle"]
-        insult_interval = dict["insult_interval"]
-        insult_toggle = dict["insult_toggle"]
-        shut_up = dict["shut_up"]
-
-        # Create new Channel object
-        object = Channel(
-            streamer,
-            er_toggle,
-            er_interval,
-            stinky_toggle,
-            stinky_interval,
-            insult_toggle,
-            insult_interval,
-            shut_up
-        )
-
-        return object
-
-    except:
-        # Return false for error handling
-        return False
