@@ -23,7 +23,7 @@ class Channel:
                     streamer, 
                     er_toggle = True,
                     er_interval = 600,
-                    stinky_toggle = True,
+                    stinky_toggle = False,
                     stinky_interval = 600,
                     insult_toggle = False,
                     insult_interval = 1200,
