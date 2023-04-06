@@ -1,16 +1,9 @@
 """
     Channel class file
 
-    This file keeps track of each channel the bot is connected to, as well as
-    timers and interals specific to that channel. This allows the bot to function
-    independantly on each channel instead of relying on global timers.
-
-    Constructor:
-    Streamer = Streamer name *required
-    interval = How frequently the streamer wants commands, default 600
-    er_timner = Keeps track of the last time a hardly know her was made
-    stinky_timer = Keeps track of the last time stinky was said
-    insult_friends_timer = Keeps track of the last insult at friends
+    This file keeps track of each channel the bot is connected to, as
+    well as timers and intervals specific to that channel. This allows
+    the bot to function independently on each channel instead of relying on global timers.
 
 """
 
@@ -20,15 +13,27 @@ class Channel:
 
     def __init__(
                     self, 
-                    streamer, 
-                    er_toggle = True,
-                    er_interval = 600,
-                    stinky_toggle = False,
-                    stinky_interval = 600,
-                    insult_toggle = False,
-                    insult_interval = 1200,
-                    shut_up = False
+                    streamer: str,
+                    er_toggle: bool = True,
+                    er_interval: int = 600,
+                    stinky_toggle: bool = False,
+                    stinky_interval: int = 600,
+                    insult_toggle: bool = False,
+                    insult_interval: int = 1200,
+                    shut_up: bool = False
                 ):
+        """
+        Creates a class object for each channel and establishes the
+        default settings.
+        :param streamer: The streamer's channel name
+        :param er_toggle: Bool status of making jokes for -er words
+        :param er_interval: Interval between -er jokes
+        :param stinky_toggle: Bool status of making stinky jokes
+        :param stinky_interval: Interval between stinky jokes
+        :param insult_toggle: Bool status of insulting my friends
+        :param insult_interval: Interval between insults
+        :param shut_up: Bool status of if the bot is enabled
+        """
 
         self.streamer = streamer
 
@@ -50,8 +55,11 @@ class Channel:
         # General variables
         self.shut_up = shut_up
 
-    def to_dict(self):
-        """Takes a Channel object and creates a dictionary to be saved to a file"""
+    def to_dict(self) -> dict:
+        """
+        Takes a Channel object and creates a dictionary of variables
+        :return: Dict of class values
+        """
 
         output = {
             "streamer": self.streamer,
