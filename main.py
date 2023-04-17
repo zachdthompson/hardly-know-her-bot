@@ -16,11 +16,11 @@ def save_to_file(streamer_obj: channel.Channel) -> bool:
         # Create a file named after the streamer for easy input
         object_dict = streamer_obj.to_dict()
         streamer = object_dict["streamer"]
-        path = os.path.join("channels", f"{streamer}.txt")
+        path = os.path.join("channels", f"{streamer}.yaml")
 
         # Write dictionary out to the file
-        with open(path, 'w') as output_file:
-            output_file.write(json.dumps(object_dict))
+        with open(path, 'w+') as output_file:
+            yaml.dump(object_dict, output_file, allow_unicode=True)
 
         # If successful return true
         output_file.close()
@@ -31,34 +31,18 @@ def save_to_file(streamer_obj: channel.Channel) -> bool:
         return False
 
 
-def file_exists(streamer_name: str) -> bool:
-    """
-    Checks if a data file exists for a streamer or not
-    """
-
-    cwd = os.getcwd()
-    path = os.path.join(cwd, "channels", f"{streamer_name}.txt")
-
-    if os.path.exists(path):
-        return True
-
-    else:
-        return False
-
-
 def load_from_file(streamer_name: str) -> channel.Channel:
     """
     Loads a streamer class object from the file storage
     :param streamer_name: The name of the streamer to load
     """
     
-    path = os.path.join("channels", f"{streamer_name}.txt")
+    path = os.path.join("channels", f"{streamer_name}.yaml")
 
     # Open file and read in as json
     with open(path, 'r') as input_file:
-        contents = input_file.read()
+        object_dict = yaml.safe_load(input_file)
 
-        object_dict = json.loads(contents)
 
     # Create object and return it
     streamer_obj = channel.Channel(
@@ -92,9 +76,12 @@ if __name__ == "__main__":
     # Create Streamer Variables
     for streamer in connected_list:
 
+        cwd = os.getcwd()
+        path = os.path.join(cwd, "channels", f"{streamer}.yaml")
+
         # If the streamer already has a data file, load it
-        if file_exists(streamer):
-            
+        if os.path.exists(path):
+
             channel_list[streamer] = load_from_file(streamer)
 
         # If data file does not exist, create a new one
