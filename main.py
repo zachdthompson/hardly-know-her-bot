@@ -55,6 +55,15 @@ def load_from_file(streamer_name: str) -> channel.Channel:
         object_dict["insult_interval"],
         object_dict["shut_up"]
     )
+
+    if object_dict["er_timer"] != 0:
+        streamer_obj.er_timer = object_dict["er_timer"]
+
+    if object_dict["stinky_timer"] != 0:
+        streamer_obj.stinky_timer = object_dict["stinky_timer"]
+
+    if object_dict["insult_timer"] != 0:
+        streamer_obj.insult_timer = object_dict["insult_timer"]
     
     return streamer_obj
     

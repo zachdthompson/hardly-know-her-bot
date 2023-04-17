@@ -65,10 +65,13 @@ class Channel:
             "streamer": self.streamer,
             "er_interval": self.er_interval,
             "er_toggle": self.er_toggle,
+            "er_timer": self.er_timer,
             "stinky_interval": self.stinky_interval,
             "stinky_toggle": self.stinky_toggle,
+            "stinky_timer": self.stinky_timer,
             "insult_interval": self.insult_interval,
             "insult_toggle": self.insult_toggle,
+            "insult_timer": self.insult_timer,
             "shut_up": self.shut_up,
         }
 

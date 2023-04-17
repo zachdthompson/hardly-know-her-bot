@@ -18,7 +18,7 @@ def time_passed(previous_timer, interval) -> bool:
     :param interval: The interval to wait to do it again
     :return: True|False if enough time has passed
     """
-    if time.time() - previous_timer < int(interval):
+    if (time.time() - previous_timer) < int(interval):
         return False
     else:
         return True
@@ -68,6 +68,80 @@ class Bot(commands.Bot):
                 initial_channels=[key for key in channel_list]
             )
 
+    async def handle_er(self, message: twitchio.Message):
+        """
+        Handles the stinky feature
+        :param message: The message being analyzed
+        """
+
+        # The current channel the message is coming from
+        streamer = self.channel_list[message.channel.name]
+
+        # Check if we can talk
+        if not time_passed(streamer.er_timer, streamer.er_interval):
+            return
+
+        # Check for all variations of THE word... Because people suck
+        the_word_regex = r"n+i+g+e+r+"
+        bad = re.search(the_word_regex, message.content.lower())
+        if bad:
+            return
+
+        # Look for a 5+ letter words ending in -er after
+        # casting the message to lower case
+        regex = r"[A-z]{3,}(er)\b"
+        find = re.search(regex, message.content.lower())
+        if find:
+            word = find[0]
+            # Check for banned words
+            if word in self.banned_words:
+                return
+
+            # Reset timer
+            streamer.er_timer = time.time()
+            await Channel.send(
+                message.channel,
+                f'{word.capitalize()}? I hardly know her!'
+            )
+            main.save_to_file(streamer)
+
+    async def handle_insult(self, message: twitchio.Message):
+
+        # The current channel the message is coming from
+        streamer = self.channel_list[message.channel.name]
+
+        # Only insult if enough time has passed
+        if not time_passed(streamer.insult_timer, streamer.insult_interval):
+            return
+
+        if message.author.name in self.friends:
+            # Reset timer
+            streamer.insult_timer = time.time()
+            await Channel.send(
+                message.channel,
+                get_insult(message.author.name)
+            )
+            main.save_to_file(streamer)
+
+    async def handle_stinky(self, message: twitchio.Message):
+
+        # The current channel the message is coming from
+        streamer = self.channel_list[message.channel.name]
+
+        # Only reply if the timer has passed
+        if not time_passed(streamer.stinky_timer, streamer.stinky_interval):
+            return
+
+        # Check if the message contains stinky
+        if message.content.lower().__contains__('stinky'):
+            # Reset timer
+            streamer.stinky_timer = time.time()
+            await commands.Context.send(
+                message.channel,
+                'Uh Oh! STINKY!'
+            )
+            main.save_to_file(streamer)
+
     async def event_message(self, message: twitchio.Message) -> None:
         """
         This function handles all message parsing and responses
@@ -95,50 +169,16 @@ class Bot(commands.Bot):
         # Only looks for insults if enabled
         if streamer.insult_toggle:
             # Check for friends
-            if message.author.name in self.friends:
-                # Insult if enough time has passed
-                if time_passed(streamer.insult_timer, streamer.insult_interval):
-                    # Reset timer
-                    streamer.insult_timer = time.time()
-                    await Channel.send(
-                        message.channel,
-                        get_insult(message.author.name)
-                    )
-                    main.save_to_file(streamer)
+            await self.handle_insult(message)
 
         # Only process for -er if toggle is enabled
         if streamer.er_toggle:
-            # Check if we can talk
-            if time_passed(streamer.er_timer, streamer.er_interval):
-                # Look for a 5+ letter words ending in -er after
-                # casting the message to lower case
-                regex = r"[A-z]{3,}(er)\b"
-                find = re.search(regex, message.content.lower())
-                if find:
-                    word = find[0]
-                    # Check for banned words
-                    if word not in self.banned_words:
-                        # Reset timer
-                        streamer.er_timer = time.time()
-                        await Channel.send(
-                            message.channel,
-                            f'{word.capitalize()}? I hardly know her!'
-                        )
-                        main.save_to_file(streamer)
+            await self.handle_er(message)
 
         # Only look for stinky if enabled
         if streamer.stinky_toggle:
             # if the message has stinky in it
-            if message.content.lower().__contains__('stinky'):
-                # check if its been a minute since the last stinky
-                if time_passed(streamer.stinky_timer, streamer.stinky_interval):
-                    # Reset timer
-                    streamer.stinky_timer = time.time()
-                    await commands.Context.send(
-                        message.channel,
-                        'Uh Oh! STINKY!'
-                    )
-                    main.save_to_file(streamer)
+            await self.handle_stinky(message)
 
     async def event_ready(self) -> None:
         # We are logged in and ready to chat and use commands...
