@@ -42,17 +42,16 @@ def load_from_file(streamer_name: str) -> channel.Channel:
     with open(path, 'r') as input_file:
         object_dict = yaml.safe_load(input_file)
 
-
     # Create object and return it
     streamer_obj = channel.Channel(
-        object_dict["streamer"],
-        object_dict["er_toggle"],
-        object_dict["er_interval"],
-        object_dict["stinky_toggle"],
-        object_dict["stinky_interval"],
-        object_dict["insult_toggle"],
-        object_dict["insult_interval"],
-        object_dict["shut_up"]
+        streamer=object_dict["streamer"],
+        er_toggle=object_dict["er_toggle"],
+        er_interval=object_dict["er_interval"],
+        stinky_toggle=object_dict["stinky_toggle"],
+        stinky_interval=object_dict["stinky_interval"],
+        insult_toggle=object_dict["insult_toggle"],
+        insult_interval=object_dict["insult_interval"],
+        shut_up=object_dict["shut_up"]
     )
 
     if object_dict["er_timer"] != 0:
@@ -78,7 +77,7 @@ if __name__ == "__main__":
     # List of channels to connect to
     connected_list = config_file['CONNECTED_CHANNELS']
 
-    # Dictionary containing connected channels and thier variables
+    # Dictionary containing connected channels and their variables
     channel_list = {}
 
     # Create Streamer Variables

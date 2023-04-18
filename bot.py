@@ -216,7 +216,13 @@ class Bot(commands.Bot):
 
     # turns off bot responses
     @commands.command()
-    async def shutup(self, ctx: commands.Context):
+    async def shutup(self, ctx: commands.Context) -> None:
+        """
+        $shutup
+
+        Disables the bot entirely
+        :param ctx: The context the command came from
+        """
 
         sender = ctx.author.name
         streamer = self.channel_list[ctx.channel.name]
@@ -231,7 +237,13 @@ class Bot(commands.Bot):
 
     # handles turning the bot responses back on
     @commands.command()
-    async def imsorry(self, ctx: commands.Context):
+    async def imsorry(self, ctx: commands.Context) -> None:
+        """
+        $imsorry
+
+        Enables the bot again
+        :param ctx: The context the command came from
+        """
 
         sender = ctx.author.name
         streamer = self.channel_list[ctx.channel.name]
@@ -244,7 +256,13 @@ class Bot(commands.Bot):
 
     # Changes the intervals at which features will trigger
     @commands.command()
-    async def interval(self, ctx: commands.Context):
+    async def interval(self, ctx: commands.Context) -> None:
+        """
+        $interval <feature> <minutes>
+
+        Sets the interval between different bot feature triggers
+        :param ctx: The context the command came from
+        """
 
         streamer = self.channel_list[ctx.channel.name]
         interval = ctx.message.content.split(' ')
@@ -255,8 +273,8 @@ class Bot(commands.Bot):
                            f'<er|stinky|insult> <# of minutes>')
 
         feature = interval[1]
-        minutes = interval[2]           # Using minutes is easer to read
-        seconds = int(interval[2])*60    # Storing seconds is easier for later calculations
+        minutes = interval[2]           # Using minutes is easier to read
+        seconds = int(minutes)*60        # Storing seconds is easier for later calculations
         changed = False                   # Tracks if the input was valid and something changed
         
         # Check for valid input features to change
@@ -283,7 +301,13 @@ class Bot(commands.Bot):
 
     # Enables features
     @commands.command()
-    async def enable(self, ctx: commands.Context):
+    async def enable(self, ctx: commands.Context) -> None:
+        """
+        $enable <feature>
+
+        Enables the specified feature
+        :param ctx: The context the command came from
+        """
 
         streamer = self.channel_list[ctx.channel.name]
         input = ctx.message.content.split(' ')
@@ -296,6 +320,8 @@ class Bot(commands.Bot):
 
         feature = input[1]
         changed = False    # Tracks if the input was valid and something changed
+
+        # TODO: add check for already enabled features
         
         # Check for valid input features to change
         match feature:
@@ -319,7 +345,13 @@ class Bot(commands.Bot):
 
     # Disables features
     @commands.command()
-    async def disable(self, ctx: commands.Context):
+    async def disable(self, ctx: commands.Context) -> None:
+        """
+        $disable <feature>
+
+        Disables the specified feature
+        :param ctx: The context the command came from
+        """
 
         streamer = self.channel_list[ctx.channel.name]
         input = ctx.message.content.split(' ')
@@ -332,6 +364,8 @@ class Bot(commands.Bot):
 
         feature = input[1]
         changed = False    # Tracks if the input was valid and something changed
+
+        # TODO: add check for already disabled features
         
         # Check for valid input features to change
         match feature:
